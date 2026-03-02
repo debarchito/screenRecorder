@@ -72,7 +72,7 @@ PluginComponent {
         root.recordState = "recording"
         root.recordTimerSeconds = 0
         recordingTimer.start()
-        ToastService.showInfo("Screen Recorder", "Select area in the Portal. Click the icon to stop.")
+        ToastService.showInfo("Screen Recorder", "Recording started. Select area in the Portal.")
     }
 
     function stopRecording() {
@@ -88,7 +88,7 @@ PluginComponent {
         root.recordTimerSeconds = 0
         root._cooldown = true
         cooldownTimer.start()
-        ToastService.showInfo("Screen Recorder", "Saved")
+        ToastService.showInfo("Screen Recorder", "Recording stopped and saved successfully")
     }
 
     Timer {
