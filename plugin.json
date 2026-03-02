@@ -3,7 +3,7 @@
   "name": "Screen Recorder",
   "description": "Start, stop, and configure screen captures with gpu-screen-recorder (Wayland: niri, Hyprland, etc.)",
   "version": "1.0.0",
-  "author": "",
+  "author": "arqueon",
   "icon": "videocam",
   "type": "widget",
   "component": "./ScreenRecorder.qml",
