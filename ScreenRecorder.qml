@@ -66,7 +66,7 @@ PluginComponent {
         }
         var dir = (outputDir || "").replace(/\/$/, "") || "${XDG_VIDEOS_DIR:-$HOME/Videos}/Screencasting"
         var cursorFlag = root.recordCursor ? "yes" : "no"
-        var script = "DIR=\"" + dir.replace(/"/g, '\\"') + "\"; mkdir -p \"$DIR\"; FILE=\"$DIR/$(date +'%Y-%m-%d_%H-%M-%S').mp4\"; exec gpu-screen-recorder -w " + captureSource + " -f " + root.fps + " -k h264 -ac opus -a default_output -q " + root.quality + " -cursor " + cursorFlag + " -cr limited -o \"$FILE\""
+        var script = "if ! command -v gpu-screen-recorder >/dev/null 2>&1; then exit 127; fi; DIR=\"" + dir.replace(/"/g, '\\"') + "\"; mkdir -p \"$DIR\"; FILE=\"$DIR/$(date +'%Y-%m-%d_%H-%M-%S').mp4\"; exec gpu-screen-recorder -w " + captureSource + " -f " + root.fps + " -k h264 -ac opus -a default_output -q " + root.quality + " -cursor " + cursorFlag + " -cr limited -o \"$FILE\""
         var proc = recorderProcessComponent.createObject(root, { procCommand: ["sh", "-c", script] })
         proc.running = true
         root.recordState = "recording"
@@ -108,7 +108,13 @@ PluginComponent {
                 recordingTimer.stop()
                 root.recordTimerSeconds = 0
                 if (!root._stopRequested && exitCode !== 0) {
-                    ToastService.showInfo("Screen Recorder", "Recording cancelled")
+                    if (exitCode === 127) {
+                        ToastService.showError("Screen Recorder", "gpu-screen-recorder is not installed or not in PATH.")
+                    } else if (root.recordTimerSeconds < 3 && exitCode === 1) {
+                        ToastService.showError("Screen Recorder Failed", "Check if xdg-desktop-portal (GNOME or Hyprland) is running and configured correctly.")
+                    } else {
+                        ToastService.showError("Screen Recorder", "Recording crashed or was cancelled. Exit code: " + exitCode)
+                    }
                 }
                 root._stopRequested = false
                 destroy()
