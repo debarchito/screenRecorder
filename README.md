@@ -1,113 +1,121 @@
 # Screen Recorder — Dank Material Shell Plugin
 
-Plugin for **Dank Material Shell** that allows you to start, stop, and configure screen captures with **gpu-screen-recorder** on Wayland (niri, Hyprland, GNOME, etc.).
+Plugin for **Dank Material Shell (DMS)** that wraps `gpu-screen-recorder` in a QML UI, letting you start, pause, and stop screen recordings directly from the DankBar on Wayland.
+
+![Plugin screenshot](screenshot.png)
 
 ## Requirements
 
-- [Dank Material Shell](https://github.com/AvengeMedia/DankMaterialShell) (DMS) running on your compositor
+- [Dank Material Shell](https://github.com/AvengeMedia/DankMaterialShell) >= 1.2.0
 - [gpu-screen-recorder](https://git.dec05eba.com/gpu-screen-recorder/) installed and in your `PATH`
-- A working XDG Desktop Portal for screencasting (specifically `xdg-desktop-portal-gnome` is required for many Wayland compositors like niri)
+- A working XDG Desktop Portal for screencasting (required when **Capture source** is set to `portal`)
 
-### Installing Dependencies
+> **Note:** The [Flatpak version of gpu-screen-recorder](https://flathub.org/en/apps/com.dec05eba.gpu_screen_recorder) is a bundled GUI frontend and is **not supported**. Install the native system package instead.
 
-#### Arch Linux & Derivatives
+### Installing gpu-screen-recorder
+
+#### Arch Linux & derivatives
 ```bash
-# Install gpu-screen-recorder
 sudo pacman -S gpu-screen-recorder
+```
 
-# Install GNOME portal for screencasting (Required for niri)
+#### Other distros
+See the [official installation guide](https://git.dec05eba.com/gpu-screen-recorder/about).
+
+### XDG Desktop Portal (for portal capture mode)
+
+If screen recording fails with a portal error (common on niri), install and configure a portal backend:
+
+```bash
+# Arch
 sudo pacman -S xdg-desktop-portal-gnome
 ```
 
-#### Ubuntu / Debian
-```bash
-# gpu-screen-recorder is not in the default repos, you may need a PPA or compile from source
-# https://git.dec05eba.com/gpu-screen-recorder/
-
-# Install the GNOME portal
-sudo apt install xdg-desktop-portal-gnome
-```
-
-#### Fedora
-```bash
-# Install gpu-screen-recorder (Available via Copr or build from source)
-# Install the GNOME portal
-sudo dnf install xdg-desktop-portal-gnome
-```
-
-#### Important: Activating the portal
-If your screen recording fails due to a portal issue (e.g., using `niri`), you must configure the desktop portal to prefer GNOME.
-Create or edit `~/.config/xdg-desktop-portal/portals.conf` (or `niri-portals.conf` depending on your setup) and add:
+Create or edit `~/.config/xdg-desktop-portal/portals.conf`:
 
 ```ini
 [preferred]
 default=gnome;gtk
 ```
 
-Then restart the services so the changes apply:
+Then restart the portal services:
+
 ```bash
 systemctl --user restart xdg-desktop-portal xdg-desktop-portal-gnome
 ```
 
-## Plugin Installation
-
-1. Clone or copy this repository.
-2. Link the folder to your DMS plugins directory:
+## Installation
 
 ```bash
-ln -sf /path/to/dms-screen-recorder ~/.config/DankMaterialShell/plugins/screenRecorder
-```
+# Clone
+git clone https://github.com/arqueon/dms-screen-recorder
+ln -sf "$(pwd)/dms-screen-recorder" ~/.config/DankMaterialShell/plugins/screenRecorder
 
-3. Reload plugins (or restart the shell):
-
-```bash
+# Reload
 dms ipc call plugins reload screenRecorder
 ```
 
-4. In **DMS Settings → Plugins**, activate the widget on the bar and/or the Control Center.
+Then go to **DMS Settings → Plugins** and enable the plugin on the bar.
 
 ## Usage
 
-- **Bar (DankBar):** Camera / "Record" icon. Click to open the popout with **Start** / **Stop and save**.
-- **Control Center:** "Screen Recorder" toggle. On = recording; Off = stopped and saved.
+### DankBar controls
 
-### Replay buffer (ShadowPlay style)
+| Action | Result |
+|--------|--------|
+| Left click | Start recording / Stop and save |
+| Right click or Middle click | Pause / Resume |
 
-In **Plugin Configuration**, set **Replay buffer** > 0 (e.g., 30s). The recording will keep the last N seconds in memory. When you click **Stop**, only that clip will be saved into the replays folder.
+The pill shows the elapsed time while recording and changes icon/color to indicate the current state.
+
+### IPC commands (keybinds)
+
+The plugin exposes IPC commands you can bind to keyboard shortcuts:
+
+```bash
+dms ipc call screenRecorder toggleRecording   # start or stop
+dms ipc call screenRecorder startRecording
+dms ipc call screenRecorder stopRecording
+dms ipc call screenRecorder togglePause       # pause or resume
+```
+
+**niri** (`~/.config/niri/config.kdl`):
+```kdl
+bindings {
+    Mod+Alt+R { spawn "dms" "ipc" "call" "screenRecorder" "toggleRecording"; }
+}
+```
+
+**Hyprland** (`hyprland.conf`):
+```conf
+bind = SUPER ALT, R, exec, dms ipc call screenRecorder toggleRecording
+```
 
 ## Configuration
 
-In **DMS Settings → Plugins → Screen Recorder**:
+Open **DMS Settings → Plugins → Screen Recorder**:
 
-| Option | Description |
-|--------|-------------|
-| **Capture source** | `portal` = choose window/screen on start; `screen` = first screen |
-| **Recordings folder** | Where to save videos (full path; defaults to ~/Videos/Screencasting if empty) |
-| **Replay buffer** | 0 = continuous recording; >0 = last N seconds |
-| **Replays folder** | Where to save clips on stop (if replay > 0) |
-| **FPS** | 24–120 |
-| **Quality** | ultra / high / medium / low |
-| **Format** | mp4, mkv, flv |
+| Option | Description | Default |
+|--------|-------------|---------|
+| **Frames per second** | Recording framerate | 60 |
+| **Video quality** | h264 encoding preset | Very high |
+| **Record audio** | Capture system audio output | On |
+| **Record cursor** | Include mouse pointer | On |
+| **Capture source** | `portal` = choose window/screen on start; `screen` = first monitor | portal |
+| **Recordings folder** | Output directory (empty = `~/Videos/Screencasting`) | — |
 
-## Stop Recording
+## How stopping works
 
-The plugin stops **gpu-screen-recorder** by sending `SIGUSR1`, so it saves the file correctly. Do not use `pkill -KILL` unless you want to discard the recording.
+The plugin sends `SIGINT` to `gpu-screen-recorder` so it finalises and saves the MP4 correctly, followed by `SIGKILL` to close any lingering portal window. Do not force-kill the process with `SIGKILL` directly or the file will be incomplete.
 
 ## Development
-
-Symlink to test changes without reinstalling:
 
 ```bash
 ln -sf "$(pwd)" ~/.config/DankMaterialShell/plugins/screenRecorder
 dms ipc call plugins reload screenRecorder
-```
-
-List plugins and state:
-
-```bash
 dms ipc call plugins list
 ```
 
 ## License
 
-You can use and modify this plugin under the same terms you accept for DMS and gpu-screen-recorder.
+MIT

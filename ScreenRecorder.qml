@@ -35,16 +35,6 @@ PluginComponent {
         onTriggered: root.recordTimerSeconds += 1
     }
 
-    onCcWidgetToggled: {
-        if (root.recordState === "idle") {
-            startRecording()
-            if (typeof PopoutService !== "undefined" && PopoutService) PopoutService.closeControlCenter()
-        } else {
-            stopRecording()
-            if (typeof PopoutService !== "undefined" && PopoutService) PopoutService.closeControlCenter()
-        }
-    }
-
     function togglePause() {
         if (root.recordState === "idle") return
         if (root.recordState === "recording") {
@@ -156,15 +146,6 @@ PluginComponent {
             }
         }
     }
-
-    ccWidgetIcon: root.recordState === "idle" ? "videocam" : (root.recordState === "recording" ? "stop_circle" : "pause_circle")
-    ccWidgetPrimaryText: "Screen Recorder"
-    ccWidgetSecondaryText: {
-        if (root.recordState === "idle") return "Ready"
-        if (root.recordState === "paused") return "Paused · " + _formatTime(root.recordTimerSeconds)
-        return "Recording · " + _formatTime(root.recordTimerSeconds)
-    }
-    ccWidgetIsActive: root.recordState !== "idle"
 
     horizontalBarPill: Component {
         Item {
