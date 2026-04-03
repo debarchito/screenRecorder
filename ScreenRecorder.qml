@@ -20,6 +20,7 @@ PluginComponent {
     property int recordTimerSeconds: 0
     property bool _stopRequested: false
     property bool _cooldown: false
+    property bool _pendingStop: false
 
     function _formatTime(totalSeconds) {
         var m = Math.floor(totalSeconds / 60)
@@ -123,6 +124,13 @@ PluginComponent {
         onTriggered: root._cooldown = false
     }
 
+    Timer {
+        id: pendingStopTimer
+        interval: 3000
+        repeat: false
+        onTriggered: root._pendingStop = false
+    }
+
     Component {
         id: recorderProcessComponent
         Process {
@@ -130,6 +138,8 @@ PluginComponent {
             command: procCommand
             onExited: function(exitCode) {
                 root.recordState = "idle"
+                root._pendingStop = false
+                pendingStopTimer.stop()
                 recordingTimer.stop()
                 root.recordTimerSeconds = 0
                 if (!root._stopRequested && exitCode !== 0) {
@@ -157,9 +167,19 @@ PluginComponent {
                 acceptedButtons: Qt.LeftButton | Qt.MiddleButton | Qt.RightButton
                 onClicked: function(mouse) {
                     if (mouse.button === Qt.LeftButton) {
-                        if (root.recordState === "idle") startRecording()
-                        else stopRecording()
+                        if (root.recordState === "idle") {
+                            startRecording()
+                        } else if (root._pendingStop) {
+                            pendingStopTimer.stop()
+                            root._pendingStop = false
+                            stopRecording()
+                        } else {
+                            root._pendingStop = true
+                            pendingStopTimer.restart()
+                        }
                     } else if (mouse.button === Qt.RightButton || mouse.button === Qt.MiddleButton) {
+                        root._pendingStop = false
+                        pendingStopTimer.stop()
                         root.togglePause()
                     }
                 }
@@ -170,15 +190,15 @@ PluginComponent {
                 spacing: Theme.spacingS
                 anchors.centerIn: parent
                 DankIcon {
-                    name: root.recordState === "idle" ? "videocam" : (root.recordState === "recording" ? "stop_circle" : "pause_circle")
+                    name: root._pendingStop ? "stop_circle" : (root.recordState === "idle" ? "videocam" : (root.recordState === "recording" ? "stop_circle" : "pause_circle"))
                     size: Theme.barIconSize(root.barThickness, -2)
-                    color: root.recordState === "idle" ? Theme.widgetIconColor : (root.recordState === "recording" ? Theme.errorText : Theme.warningText)
+                    color: root._pendingStop ? Theme.warningText : (root.recordState === "idle" ? Theme.widgetIconColor : (root.recordState === "recording" ? Theme.errorText : Theme.warningText))
                     anchors.verticalCenter: parent.verticalCenter
                 }
                 StyledText {
                     visible: root.recordState !== "idle"
-                    text: root._formatTime(root.recordTimerSeconds)
-                    color: Theme.surfaceText
+                    text: root._pendingStop ? "Stop?" : root._formatTime(root.recordTimerSeconds)
+                    color: root._pendingStop ? Theme.warningText : Theme.surfaceText
                     font.pixelSize: Theme.fontSizeSmall
                     font.weight: Font.Bold
                     anchors.verticalCenter: parent.verticalCenter
@@ -197,9 +217,19 @@ PluginComponent {
                 acceptedButtons: Qt.LeftButton | Qt.MiddleButton | Qt.RightButton
                 onClicked: function(mouse) {
                     if (mouse.button === Qt.LeftButton) {
-                        if (root.recordState === "idle") startRecording()
-                        else stopRecording()
+                        if (root.recordState === "idle") {
+                            startRecording()
+                        } else if (root._pendingStop) {
+                            pendingStopTimer.stop()
+                            root._pendingStop = false
+                            stopRecording()
+                        } else {
+                            root._pendingStop = true
+                            pendingStopTimer.restart()
+                        }
                     } else if (mouse.button === Qt.RightButton || mouse.button === Qt.MiddleButton) {
+                        root._pendingStop = false
+                        pendingStopTimer.stop()
                         root.togglePause()
                     }
                 }
@@ -210,15 +240,15 @@ PluginComponent {
                 spacing: Theme.spacingXS
                 anchors.horizontalCenter: parent.horizontalCenter
                 DankIcon {
-                    name: root.recordState === "idle" ? "videocam" : (root.recordState === "recording" ? "stop_circle" : "pause_circle")
+                    name: root._pendingStop ? "stop_circle" : (root.recordState === "idle" ? "videocam" : (root.recordState === "recording" ? "stop_circle" : "pause_circle"))
                     size: Theme.barIconSize(root.barThickness, -2)
-                    color: root.recordState === "idle" ? Theme.widgetIconColor : (root.recordState === "recording" ? Theme.errorText : Theme.warningText)
+                    color: root._pendingStop ? Theme.warningText : (root.recordState === "idle" ? Theme.widgetIconColor : (root.recordState === "recording" ? Theme.errorText : Theme.warningText))
                     anchors.horizontalCenter: parent.horizontalCenter
                 }
                 StyledText {
                     visible: root.recordState !== "idle"
-                    text: root._formatTime(root.recordTimerSeconds)
-                    color: Theme.surfaceText
+                    text: root._pendingStop ? "Stop?" : root._formatTime(root.recordTimerSeconds)
+                    color: root._pendingStop ? Theme.warningText : Theme.surfaceText
                     font.pixelSize: 10
                     font.weight: Font.Bold
                     anchors.horizontalCenter: parent.horizontalCenter

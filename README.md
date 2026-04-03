@@ -63,10 +63,11 @@ Then go to **DMS Settings → Plugins** and enable the plugin on the bar.
 
 | Action | Result |
 |--------|--------|
-| Left click | Start recording / Stop and save |
+| Left click | Start recording |
+| Left click (while recording) | Show **Stop?** confirmation — click again to stop and save |
 | Right click or Middle click | Pause / Resume |
 
-The pill shows the elapsed time while recording and changes icon/color to indicate the current state.
+When you click to stop, the pill turns orange and shows **Stop?** for 3 seconds. Click again to confirm, or do nothing to cancel and keep recording. This prevents accidentally stopping a recording with a misclick.
 
 ### IPC commands (keybinds)
 
