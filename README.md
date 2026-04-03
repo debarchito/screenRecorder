@@ -2,7 +2,7 @@
 
 Plugin for **Dank Material Shell (DMS)** that wraps `gpu-screen-recorder` in a QML UI, letting you start, pause, and stop screen recordings directly from the DankBar on Wayland.
 
-![Plugin screenshot](screenshot.png)
+![Plugin screenshot](assets/screenshot.png)
 
 ## Requirements
 
