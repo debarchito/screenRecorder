@@ -16,7 +16,7 @@ PluginSettings {
     }
     StyledText {
         width: parent.width
-        text: "Start, stop, and configure screen captures in Wayland (niri, Hyprland, etc.). Requires gpu-screen-recorder installed."
+        text: "Start, stop, and configure screen captures on any Wayland compositor. Requires gpu-screen-recorder installed."
         font.pixelSize: Theme.fontSizeSmall
         color: Theme.surfaceVariantText
         wrapMode: Text.WordWrap

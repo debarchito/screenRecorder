@@ -1,6 +1,6 @@
 # Screen Recorder — Dank Material Shell Plugin
 
-Plugin for **Dank Material Shell (DMS)** that wraps `gpu-screen-recorder` in a QML UI, letting you start, pause, and stop screen recordings directly from the DankBar on Wayland.
+Plugin for **Dank Material Shell (DMS)** that wraps `gpu-screen-recorder` in a QML UI, letting you start, pause, and stop screen recordings directly from the DankBar. Works on any Wayland compositor.
 
 ![Plugin screenshot](assets/screenshot.png)
 
@@ -24,7 +24,7 @@ See the [official installation guide](https://git.dec05eba.com/gpu-screen-record
 
 ### XDG Desktop Portal (for portal capture mode)
 
-If screen recording fails with a portal error (common on niri), install and configure a portal backend:
+If screen recording fails with a portal error, install and configure a portal backend:
 
 ```bash
 # Arch
@@ -80,17 +80,32 @@ dms ipc call screenRecorder stopRecording
 dms ipc call screenRecorder togglePause       # pause or resume
 ```
 
+> **Note:** IPC commands bypass the 3-second stop confirmation. `toggleRecording` stops immediately when a recording is active.
+
 **niri** (`~/.config/niri/config.kdl`):
 ```kdl
 bindings {
     Mod+Alt+R { spawn "dms" "ipc" "call" "screenRecorder" "toggleRecording"; }
+    Mod+Alt+P { spawn "dms" "ipc" "call" "screenRecorder" "togglePause"; }
 }
 ```
 
 **Hyprland** (`hyprland.conf`):
 ```conf
 bind = SUPER ALT, R, exec, dms ipc call screenRecorder toggleRecording
+bind = SUPER ALT, P, exec, dms ipc call screenRecorder togglePause
 ```
+
+**Sway** (`~/.config/sway/config`):
+```conf
+bindsym $mod+Alt+r exec dms ipc call screenRecorder toggleRecording
+bindsym $mod+Alt+p exec dms ipc call screenRecorder togglePause
+```
+
+**KDE Plasma** (System Settings → Shortcuts → Custom Shortcuts):
+Set the trigger command to `dms ipc call screenRecorder toggleRecording`.
+
+**Wayfire / COSMIC / any compositor with custom keybind support:** Run `dms ipc call screenRecorder <method>` as the command.
 
 ## Configuration
 
